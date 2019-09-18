@@ -176,7 +176,7 @@ func main() {
 */
 
 
-/*
+
 // 数据
 //切片(slice) 可实现类似动态数组的功能
 import "fmt"
@@ -191,7 +191,7 @@ func main() {
 	fmt.Println(x)
 	fmt.Println(x[5:7])   // 类似Python的切片
 }
-*/
+
 
 
 
