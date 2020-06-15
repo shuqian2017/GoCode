@@ -21,6 +21,7 @@ code is far away from bugs with the god animal protecting
 package main
 
 
+
 // 4.1      关键字func用于定义函数
 //* 1. 无需前置声明
 //* 2. 不支持命名嵌套定义(nested)
@@ -643,26 +644,61 @@ package main
 
 // 上面eg例子 应该直接调用，或者重构为函数，将循环个处理算法分离
 //import (
-//    "fmt"
-//    "os"
-//    "log"
+//   "fmt"
+//   "os"
+//   "log"
 //)
 //
 //func main() {
-//    // 日志处理算法
-//    do := func(n int) {
-//        path := fmt.Sprintf("./log/%d.txt", n)
-//        f ,err := os.Open(path)
-//        if err != nil {
-//            log.Println(err)
-//        }
-//        // 该延迟调用在此匿名函数结束时才执行，而非main
-//        defer f.Close()
-//    }
-//    for i := 0; i < 10; i++ {
-//        do(i)
-//    }
+//   // 日志处理算法
+//   do := func(n int) {
+//       path := fmt.Sprintf("./log/%d.txt", n)
+//       f ,err := os.Open(path)
+//       if err != nil {
+//           log.Println(err)
+//       }
+//       // 该延迟调用在此匿名函数结束时才执行，而非main
+//       defer f.Close()
+//   }
+//   for i := 0; i < 10; i++ {
+//       do(i)
+//   }
 //}
+
+
+
+
+
+// 性能   延迟调用花费更大代价。其中包括注册、调用等操作，还有额外的缓存开销
+//import (
+//   "sync"
+//   "testing"
+//)
+//
+//var m sync.Mutex
+//
+//func call()  {
+//   m.Lock()
+//   m.Unlock()
+//}
+//
+//func deferCall()  {
+//   m.Lock()
+//   defer m.Unlock()
+//}
+//
+//func BenchmarkCall(b *testing.B)  {
+//   for i := 0; i < b.N; i++ {
+//       call()                                       // BenchmarkCall-4    	20000000	        66.8 ns/op
+//   }
+//}
+//
+//func BenchmarkDefer(b *testing.B)  {
+//   for i := 0; i < b.N; i++ {                       // BenchmarkDefer-4   	10000000	       195 ns/op
+//       deferCall()
+//   }
+//}  // 将例子单独复制到一个文件中运行，例如（main_test.go）
+
 
 
 
@@ -680,3 +716,210 @@ package main
 
 
 
+// 4.6 错误处理         官方推荐的标准做法是返回error状态
+
+//type error interface {
+//    Error() string              // 标准库将error定义为接口类型，以便实现自定义错误类型
+//}
+
+
+//import (
+//    "errors"
+//    "log"
+//)
+//
+//var errDivByZero = errors.New("division by zero")
+//
+//func div(x, y int) (int, error) {
+//    if y == 0 {
+//        return 0, errDivByZero
+//    }
+//
+//    return x / y, nil
+//}
+//
+//func main() {
+//    z, err := div(5, 0)
+//    if err == errDivByZero {        // 应该通过错误变量，而非文本内容来判断错误类别
+//       log.Fatalln(err)
+//    }
+//
+//    println(z)
+//}
+
+
+
+
+//import (
+//    "fmt"
+//    "log"
+//)
+//
+//type DivError struct {                          // 自定义错误类型
+//    x, y int
+//}
+//
+//func (DivError) Error() string {                // 实现error接口方法
+//    return "division by zero."
+//}
+//
+//func div(x, y int) (int, error) {
+//    if y == 0 {
+//        return 0, DivError{x, y}           // 返回自定义错误类型
+//    }
+//
+//    return x / y, nil
+//}
+//
+//func main() {
+//    z, err := div(5, 0)
+//
+//    if err != nil {
+//        switch e := err.(type) {                // 根据类型匹配
+//        case DivError:                          // 自定义错误类型通常以Error为名称后缀。switch匹配case时，应将自定义类型放在前面
+//            fmt.Println(e, e.x, e.y)
+//        default:
+//            fmt.Println(e)
+//        }
+//
+//        log.Fatalln(err)
+//    }
+//    println(z)
+//}   // 在调用多返回值函数时，除error外，其他返回值同样需要关注
+
+
+//```go
+//大量函数和方法返回error, 使得调用代码变得很难看，一堆堆的检查语句充斥在代码行间，解决思路有：
+//①：使用专门的检查函数处理错误逻辑(比如记录日志)，简化检查代码
+//②：在不影响逻辑的情况下, 使用defer延后处理错误状态(err退化赋值)
+//③：在不中断逻辑的情况下, 将错误作为内部状态保存，等最终"提交"时再处理。
+//```
+
+
+
+
+// panic, recover    与error相比, panic/recover在使用方法上更接近try/catch结构化异常
+//import (
+//    "log"
+//)
+//
+//func main() {
+//    defer func() {
+//        if err := recover(); err != nil {           // 捕获错误
+//            log.Fatalln(err)
+//        }
+//    }()
+//
+//    panic("i am dead")                          // 引发错误
+//    println("exit.")                        // 永远不会执行
+//}   // panic/recover 是内置函数而非语句。panic会中断当前函数流程。执行延迟调用，而当前延迟调用函数recover可捕获并返回panic提交的错误对象
+
+
+
+//import (
+//    "log"
+//)
+//
+//func test() {
+//    defer println("test.1")
+//    defer println("test.2")
+//
+//    panic("i am dead")                  // panic参数是空接口类型，因此可以使用任何对象作为错误状态
+//}
+//
+//func main() {
+//    defer func() {
+//        log.Println(recover())            // 而recover返回结果同样需要做转型才能获得具体信息
+//    }()
+//
+//    test()
+//}   // 无论是否执行recover,所有延迟调用都会被执行。但中断性错误会沿调用堆栈向外传递，要么被外层捕获，要么导致进程崩溃
+
+
+
+//import (
+//    "log"
+//)
+//
+//func main() {
+//    defer func() {
+//        for {
+//            if err := recover(); err != nil {
+//                log.Println(err)
+//            } else {
+//                log.Fatalln("fatal")
+//            }
+//        }
+//    }()
+//
+//    defer func() {
+//        panic("you are dead")               // 类似重新抛出异常(rethrow)
+//    }()                                        // 可先recover捕获, 包装后重新抛出
+//
+//    panic("i am dead")                      // 连续调用panic, 仅最后一个会被recover捕获，因此此处其实并没有被捕获
+//}
+
+
+
+//import (
+//    "log"
+//)
+//
+//func catch() {
+//    log.Println("catch:", recover())
+//}
+//
+//func main() {
+//    defer catch()                           // 捕获
+//    defer log.Println(recover())            // 失败
+//    defer recover()                         // 失败
+//
+//    panic("i am dead")
+//}   // 在延迟函数中panic,不会影响后续延迟调用执行，而recover之后panic,可被再次捕获。recover必须在延迟调用函数中执行才能正常工作
+
+
+
+//func test(x, y int) {
+//    z := 0
+//
+//    func() {
+//        defer func() {
+//            if recover() != nil {
+//                z = 0
+//            }
+//        }()
+//
+//        z = x / y
+//    } ()
+//
+//    println("x / y =", z)
+//}
+//
+//func main() {
+//    test(5, 0)
+//}   // 考虑到recover特性，如果要保护代码片段，那么只能将其重构为函数调用
+
+
+// 调试阶段，可使用runtime/debug.PrintStack函数输出完整调用堆栈信息
+import (
+    "runtime/debug"
+)
+
+func test() {
+    panic("i am dead")
+}
+
+func main() {
+    defer func() {
+        if err := recover(); err != nil {
+            debug.PrintStack()
+        }
+    }()
+
+    test()
+}
+
+
+//```GO
+//建议： 除非是不可恢复性、导致系统无法正常工作的错误，否则不建议使用panic.
+//```
