@@ -334,7 +334,7 @@ package main
 //  s := "书神"
 //  println(len(s), utf8.RuneCountInString(s))    // 标准库Unicode提供丰富的操作函数。还可以用RuneCountInString代替len来返回准确的字符数
 //
-//  s = string(s[0:1] + s[3:4])            // 字符串存储的直接数组，不一定就是合法的UTF-8文本
+//  s = string(s[0:1] + s[3:4])            // 获取并拼接一个"不合法"的字符串； 字符串存储的字节数组，不一定就是合法的UTF-8文本
 //  fmt.Println(s, utf8.ValidString(s))
 //}
 
@@ -368,3 +368,125 @@ package main
 //   d1 = d2                    // 错误： cannot use d2 (type [2]int) as type [3]int in assignment
 //}
 
+
+//import (
+//  "fmt"
+//)
+//
+//func main() {
+//  var a [4]int                  // 元素自动初始化为0
+//
+//  b := [4]int{2, 5}             // 未提供初始化值的元素自动初始化为0
+//  c := [4]int{5, 3: 10}         // 可指定索引位置初始化
+//
+//  d := [...]int{1, 2, 3}        // 编译器按初始化值数量确定数组长度
+//  e := [...]int{10, 3: 100}     // 支持索引初始化，但注意数组长度与此有关
+//
+//  fmt.Println(a, b, c, d, e)
+//}
+
+
+
+//import (
+//   "fmt"
+//)
+//
+//func main() {
+//   type user struct {
+//      name string
+//      age byte
+//   }
+//
+//   d := [...]user{
+//      {"Tom", 20},      // 省略了类型标签
+//      {"fke", 18},
+//   }
+//
+//   fmt.Printf("%#v\n", d)
+//} // 对于结构等复合类型，可省略元素初始化类型标签
+
+
+
+//import (
+//   "fmt"
+//)
+//
+//func main() {
+//   a := [2][2]int{
+//      {1, 2},
+//      {3, 4},
+//   }
+//
+//   b := [...][2]int{       // 在定义多维数组时，仅第一维度允许使用"..."
+//      {10, 20},
+//      {30, 40},
+//   }
+//
+//   c := [...][2][2]int{    // 三维数组
+//      {
+//         {1, 2},
+//         {3, 4},
+//      },
+//      {
+//         {10, 20},
+//         {30, 40},
+//      },
+//   }
+//
+//   fmt.Println(a)
+//   fmt.Println(b)
+//   fmt.Println(c)
+//}
+
+
+
+//func main() {
+//   a := [2]int{}
+//   b := [...][2]int{
+//      {10, 20},
+//      {30, 40},
+//      {50, 60},
+//   }
+//
+//   println(len(a), cap(a))             // len和cap都返回第一维度长度
+//   println(len(b), cap(b))
+//   println(len(b[1]), cap(b[1]))
+//}
+
+
+
+//func main() {
+//    var a, b [2]int
+//    println(a ==b)
+//
+//    c := [2]int{1, 2}
+//    d := [2]int{0 ,1}
+//    println(c != d)
+//
+//    var e, f [2]map[string]int
+//    println(e == f)              // 无效操作： e == f ([2]map[string]int cannot be compared)
+//}
+
+
+
+
+
+
+// 指针   要分清指针数组和数组指针的区别。
+//'''
+//指针数组： 指元素为指针类型的数组
+//数组指针： 指获取数组变量的地址
+//'''
+
+import (
+   "fmt"
+)
+
+func main() {
+   x, y := 10, 20
+   a := [...]*int{&x, &y}           // 元素为指针的指针数组
+   p := &a                          // 存储数组地址的指针
+
+   fmt.Printf("%T, %v\n", a, a)
+   fmt.Printf("%T, %v\n", p, p)
+}
