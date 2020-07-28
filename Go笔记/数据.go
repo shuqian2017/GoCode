@@ -455,6 +455,29 @@ package main
 
 
 
+//import (
+//  "fmt"
+//)
+//
+//func main() {
+//  // 数据类型为 切片，长度为5，容量为10
+//  a := make([]int,5,10)
+//  fmt.Println(a,cap(a),len(a)) // out put : [0 0 0 0 0] 10 5
+//
+//  // 切片追加元素，当超过原来的的容量的时候，会翻倍扩容，但不是一定翻倍，如果容量太大不会再翻倍
+//  for i := 0; i < 10; i++  {
+//     a = append(a, i)
+//  }
+//
+//  // 再对值进行修改
+//  for i:= 0; i < 10; i++  {
+//     a[i] = i
+//  }
+//  fmt.Println(a,cap(a),len(a)) // [0 1 2 3 4 5 6 7 8 9 5 6 7 8 9] 20 15
+//}  //cap 数据类型的容量; len 数据类型的实际长度。cap主要是为了让slice提供可变长度
+
+
+
 //func main() {
 //    var a, b [2]int
 //    println(a ==b)
@@ -478,15 +501,257 @@ package main
 //数组指针： 指获取数组变量的地址
 //'''
 
-import (
-   "fmt"
-)
+//import (
+//   "fmt"
+//)
+//
+//func main() {
+//   x, y := 10, 20
+//   a := [...]*int{&x, &y}           // 元素为指针的指针数组
+//   p := &a                          // 存储数组地址的指针
+//
+//   fmt.Printf("%T, %v\n", a, a)
+//   fmt.Printf("%T, %v\n", p, p)
+//}
 
-func main() {
-   x, y := 10, 20
-   a := [...]*int{&x, &y}           // 元素为指针的指针数组
-   p := &a                          // 存储数组地址的指针
 
-   fmt.Printf("%T, %v\n", a, a)
-   fmt.Printf("%T, %v\n", p, p)
-}
+
+//func main() {
+//   a := [...]int{1, 2}
+//   println(&a, &a[0], &a[1])
+//} // 可获取任意元素地址
+
+
+//func main() {
+//   a := [...]int{1, 2}
+//   p := &a
+//
+//   p[1] += 10         // 数组指针可直接用来操作元素
+//   println(p[1])
+//}
+
+
+
+
+
+
+
+// 复制    与C数组变量隐式作为指针不同，Go数组是值类型，赋值和传参操作都会复制整个数组数据
+
+//import (
+//   "fmt"
+//)
+//
+//func test(x [2]int) {
+//   fmt.Printf("x: %p, %v\n", &x, x)
+//}
+//
+//func main() {
+//   a := [2]int{10, 20}
+//   var b [2]int
+//   b = a
+//
+//   fmt.Printf("a: %p, %v\n", &a, a)
+//   fmt.Printf("b: %p, %v\n", &b, b)
+//
+//   test(a)
+//}
+
+
+
+//import (
+//   "fmt"
+//)
+//
+//func test(x *[2]int) {
+//   fmt.Printf("x: %p, %v\n", x, *x)       // 可以使用指针或切片，以此避免数据复制
+//   x[1] += 100
+//}
+//
+//func main() {
+//   a := [2]int{10, 20}
+//   test(&a)
+//
+//   fmt.Printf("a: %p, %v\n", &a, a)
+//}
+
+
+
+
+
+
+
+
+
+
+//*********************************************************************************************
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// 5.3 切片
+// *切片(slice)本身并非动态数组或数组指针。它内部通过指针引用底层数组，设定相关属性将数组读写操作限定在指定区域内。 切片本身是个只读对象
+// *属性cap表示切片所引用数组的真实长度，len用于限定可读的写元素数量。另外数组必须addressable否则会引发错误
+
+//func main() {
+//   m := map[string][2]int{
+//      "a": {1, 2},
+//   }
+//
+//   s := m["a"][:]    // 无效  m["a"][:] (slice of unaddressable value)
+//   println(s)
+//}
+
+
+
+//func main() {
+//   x := [...]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+//   s := x[2:5]
+//
+//   for i := 0; i < len(s); i++ {
+//      println(s[i])                 // 和数组一样，切片也使用索引号访问元素内容。起始值为0，而非使用数组本身的索引号
+//   }
+//}
+
+
+
+//import (
+//   "fmt"
+//)
+//
+//func main() {
+//   s1 := make([]int, 3, 5)                // 指定len, cap底层数组初始化为0
+//   s2 := make([]int, 3)                   // 省略cap 和 len相等
+//   s3 := []int{10, 20, 5: 30}             // 按初始化元素分配底层数组，并设置len, cap
+//
+//   fmt.Println(s2, len(s2), cap(s2))
+//   fmt.Println(s1, len(s1), cap(s1))
+//   fmt.Println(s3, len(s3), cap(s3))      //  结果： [10 20 0 0 0 30] 6 6
+//}
+
+
+
+//import (
+//   "fmt"
+//   "reflect"
+//   "unsafe"
+//)
+//
+//func main() {
+//   var a []int             // 此操作仅定义一个 []int 类型变量，并未执行初始化操作
+//   b := []int{}            // 使用初始化表达式完成了全部创建过程
+//
+//   // a == nil 仅表示它是一个未初始化的切片对象，但切片本身依然会分配内存。对nil切片执行slice[:]操作，同样返回nil
+//   println(a == nil, b == nil)         // 结果 ： true false
+//
+//   fmt.Printf("a: %#v\n", (*reflect.SliceHeader)(unsafe.Pointer(&a)))
+//   fmt.Printf("b: %#v\n", (*reflect.SliceHeader)(unsafe.Pointer(&b)))
+//   fmt.Printf("a size: %d\n", unsafe.Sizeof(a))
+//}
+
+
+
+//func main() {
+//   a := make([]int, 1)
+//   b := make([]int, 1)
+//
+//   println(a == b)  // 无效 a == b (slice can only be compared to nil)
+//   println(&a, &b)
+//}  // 切片不支持比较操作，就算元素类型支持也不行。仅能判断是否为nil
+
+
+
+// 可以获取元素地址，但不能向数组那样直接用指针访问元素内容
+//import (
+//   "fmt"
+//)
+//
+//func main() {
+//   s := []int{0, 1, 2, 3, 4}
+//
+//   p := &s
+//   p0 := &s[0]
+//   p1 := &s[1]
+//
+//   println(p, p0, p1)
+//   (*p)[0] += 100
+//   *p1 += 100
+//
+//   fmt.Println(s)
+//}
+
+
+
+
+//import (
+//  "fmt"
+//)
+
+//func main() {
+//  x := [][]int{
+//     {1, 2},
+//     {10, 20, 30},
+//     {100},
+//  }
+//
+//  fmt.Println(x[1])              // 结果： [10 20 30]
+//
+//  x[2] = append(x[2], 200, 300)
+//  fmt.Println(x[2], x)           // 结果： [100 200 300] [[1 2] [10 20 30] [100 200 300]]
+//}
+
+
+
+
+// 切片是很小的结构体对象，用来代替数组传参可避免复制开销；make函数允许在运行期动态指定数组长度，绕开了数组类型编译期常量的限制。
+// 并非所有时候都适合用切片来代替数组。因为切片底层数组可能会在堆上分配内存。而小数组在栈上拷贝的消耗未必比make代价大
+//import (
+//  "testing"
+//)
+//
+//func array() [1024]int {
+//  var x [1024]int
+//  for i := 0; i < len(x); i++ {
+//     x[i] = i
+//  }
+//
+//  return x
+//}
+//
+//func slice() []int {
+//  x := make([]int, 1024)
+//  for i := 0; i < len(x); i++ {
+//     x[i] = i
+//  }
+//
+//  return x
+//}
+//
+//func BenchmarkArray(b *testing.B) {                   //  500000	      3106 ns/op
+//  for i := 0; i < b.N; i++{
+//     array()
+//  }
+//}
+//
+//func BenchmarkSlice(b *testing.B) {                   //  300000	      5144 ns/op
+//  for i:= 0; i < b.N; i++{
+//     slice()
+//  }
+//}  // 复制此段代码到 main_test.go文件运行即可
+
+
+
+
+
+
+// reslice
