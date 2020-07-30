@@ -20,7 +20,6 @@ code is far away from bugs with the god animal protecting
 */
 package main
 
-
 // 5.1 字符串     字符串是不可变字节(byte)序列，其本身是一个复合结构
 
 //import (
@@ -462,7 +461,7 @@ package main
 //func main() {
 //  // 数据类型为 切片，长度为5，容量为10
 //  a := make([]int,5,10)
-//  fmt.Println(a,cap(a),len(a)) // out put : [0 0 0 0 0] 10 5
+//  fmt.Println(a,cap(a),len(a))        // 运行结果 : [0 0 0 0 0] 10 5
 //
 //  // 切片追加元素，当超过原来的的容量的时候，会翻倍扩容，但不是一定翻倍，如果容量太大不会再翻倍
 //  for i := 0; i < 10; i++  {
@@ -754,4 +753,214 @@ package main
 
 
 
-// reslice
+// reslice   将切片视作[cap]slice数据源，据此创建新切片对象。不能超出cap，但不受len限制
+//import (
+//    "fmt"
+//)
+//
+//func main() {
+//    d := [...]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+//    s1 := d[3:7]
+//    s2 := s1[1:3]
+//
+//    for i := range s2 {
+//        s2[i] += 100        // 新建切片对象依旧指向原底层数组，也就是说修改对所有关联切片可见
+//    }
+//
+//    fmt.Println(d)          // 结果： [0 1 2 3 104 105 6 7 8 9]
+//    fmt.Println(s1)         // 结果： [3 104 105 6]
+//    fmt.Println(s2)         // 结果： [104 105]
+//}
+
+
+
+
+//import (
+//    "fmt"
+//    "errors"
+//)
+//
+//func main() {
+//    // 栈最大容量5
+//    stack := make([]int, 0, 5)
+//
+//    // 入栈
+//    push := func(x int) error{
+//        n := len(stack)
+//        if n == cap(stack) {
+//            return errors.New("stack is full")
+//        }
+//
+//        stack = stack[:n+1]           // 利用reslice操作，很容易就能实现一个栈式数据结构
+//        stack[n] = x
+//
+//        return nil
+//    }
+//
+//    // 出栈
+//    pop := func() (int, error) {
+//        n := len(stack)
+//        if n == 0 {
+//            return 0, errors.New("stack is empty")
+//        }
+//
+//        x := stack[n-1]
+//        stack = stack[:n-1]
+//
+//        return x, nil
+//    }
+//
+//    // 入栈测试
+//    for i := 0; i < 7; i++ {
+//        fmt.Printf("push %d: %v, %v\n", i, push(i), stack)
+//    }
+//
+//    // 出栈测试
+//    for i := 0; i < 7; i++ {
+//        x, err := pop()
+//        fmt.Printf("pop: %d, %v, %v\n", x, err, stack)
+//    }
+//}
+
+
+
+
+
+
+// append   向切片尾部slice[len] 添加数据，返回新的切片对象
+//import (
+//    "fmt"
+//)
+//
+//func main() {
+//    s := make([]int, 0, 5)
+//
+//    s1 := append(s, 10)
+//    s2 := append(s1, 20 ,30)        // 追加多个数据
+//
+//    fmt.Println(s, len(s), cap(s))         // 不会修改原slice属性
+//    fmt.Println(s1, len(s1), cap(s1))
+//    fmt.Println(s2, len(s2), cap(s2))
+//}
+
+
+
+
+//import (
+//    "fmt"
+//)
+//
+//func main() {
+//    s := make([]int, 0, 100)
+//    fmt.Println(s)
+//    s1 := s[:2:4]
+//    s2 := append(s1, 1, 2, 3, 4, 5, 6)      // 超出新cap：s1 cap=4限制，分配新的底层数组
+//
+//    fmt.Printf("s1: %p: %v\n", &s1[0], s1)
+//    fmt.Printf("s2: %p: %v\n", &s2[0], s2)
+//
+//    fmt.Printf("s data: %v\n", s[:10])
+//    fmt.Printf("s1 cap: %d , s2 cap: %d\n", cap(s1), cap(s2))       // 运行结果 ： s1 cap: 4 , s2 cap: 8
+//}   // 每次扩容并非都是上次的2倍。如果切片较大，会尝试扩容1/4， 以节约内存
+
+
+
+//import (
+//    "fmt"
+//)
+//
+//func main() {
+//    var s []int
+//    s = append(s, 1, 2, 3, 4)       // 向nil切片追加数据时，会为其分配底层数组内存
+//    fmt.Println(s)      // 运行结果： [1 2 3 4]
+//}   // 因为存在重新分配底层数组的缘故，所以在某些时候建议预留足够多的空间，避免中途内存分配和数据复制开销
+
+
+
+
+
+
+
+// copy    在2个切片对象间进行复制数据，允许指向同一底层数组，允许目标区间重叠。最终复制长度以较短的切片长度为准
+//import (
+//    "fmt"
+//)
+//
+//func main() {
+//    s := []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+//
+//    s1 := s[5:8]
+//    n := copy(s[3:], s1)
+//    fmt.Println(n, s, s1)           // 运行结果： 3 [0 1 2 5 6 7 6 7 8 9] [7 6 7]
+//
+//    s2 := make([]int, 6)
+//    fmt.Println(s2)                 // 运行结果： [0 0 0 0 0 0]
+//    n = copy(s, s2)                 // s2 >> s
+//    fmt.Println(n, s, s1, s2)       // 6 [0 0 0 0 0 0 6 7 8 9] [0 6 7] [0 0 0 0 0 0]
+//}
+
+
+
+//import (
+//    "fmt"
+//)
+//
+//func main() {
+//    b := make([]byte, 3)
+//    n := copy(b, "abcdef")          // 直接从字符串中复制数据到[]byte
+//    fmt.Println(n, b)
+//}   // 如果切片长时间引用大数组中的小片段，建议新建独立切片，复制出所需要的数据，以便原数组内存可被及时回收
+
+
+
+
+
+
+
+
+
+
+//*********************************************************************************************
+
+
+
+
+
+
+
+
+
+
+
+
+// 字典       一种使用频率极高的数据结构。将其作为内置类型，从运行时层面进行优化，可以获得更高效的性能
+// *字典是引用类型，使用make函数或初始化表达语句来创建
+//import (
+//    "fmt"
+//)
+//
+//func main() {
+//    m := make(map[string]int)
+//    m["a"] = 1
+//    m["b"] = 2
+//
+//    m2 := map[int]struct{       // 值为匿名结构类型
+//        x int
+//    }{
+//        1 : {x: 100},           // 可省略key、value类型标签
+//        2 : {x: 200},
+//    }
+//    fmt.Println(m, m2)          // 运行结果： map[a:1 b:2] map[1:{100} 2:{200}]
+//
+//    m["a"] = 10                 // 修改
+//    m["c"] = 30                 // 新增
+//
+//    if v, ok := m["d"]; ok {    // 使用ok-idiom判断key是否存在，返回值
+//        fmt.Println(v)
+//    } else {
+//        fmt.Println("键值对不存在 m['d']")
+//    }
+//
+//    delete(m, "d")          // 删除键值对。不存在时，不会出错
+//}
+
